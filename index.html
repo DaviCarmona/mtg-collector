@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14111a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MTG Collector">
+<title>MTG Collector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14111a; --bg2:#1c1824; --panel:#231e2d; --line:#342c42; --text:#ece6f5; --muted:#a59cb5;
+  --gold:#d9ad55; --gold2:#f0cd85; --red:#e2636b; --green:#5fc78f; --radius:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:15px}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+a{color:var(--gold2)}
+
+/* Topo */
+header{position:sticky;top:0;z-index:30;background:rgba(20,17,26,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:16px;padding:12px 20px;flex-wrap:wrap}
+.logo{font-family:Cinzel,serif;font-weight:700;font-size:22px;letter-spacing:.5px;color:var(--gold);display:flex;align-items:center;gap:10px;white-space:nowrap}
+.logo svg{flex:none}
+.tabs{display:flex;gap:4px;background:var(--bg2);padding:4px;border-radius:999px;border:1px solid var(--line)}
+.tab{border:0;background:none;padding:7px 16px;border-radius:999px;color:var(--muted);font-weight:600}
+.tab.on{background:var(--gold);color:#1b1408}
+.tab .soon{font-size:10px;font-weight:600;opacity:.8;margin-left:4px}
+.stats{margin-left:auto;display:flex;gap:16px;align-items:center;color:var(--muted);font-size:13px}
+.stats b{color:var(--text);font-size:15px}
+.stats .val b{color:var(--gold2)}
+.btn{border:1px solid var(--line);background:var(--panel);padding:8px 14px;border-radius:10px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--gold)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1b1408}
+.btn.ghost{background:none}
+.btn.danger{border-color:var(--red);color:var(--red);background:none}
+.iconbtn{width:38px;height:38px;justify-content:center;padding:0}
+.sync{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--green)}.dot.busy{background:var(--gold)}.dot.err{background:var(--red)}
+
+/* Barra de filtros */
+.toolbar{display:flex;gap:10px;align-items:center;padding:0 20px 12px;flex-wrap:wrap}
+.search{flex:1 1 260px;position:relative}
+.search input{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:9px 12px 9px 36px;outline:none}
+.search input:focus{border-color:var(--gold)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.6}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--bg2);padding:6px 12px;border-radius:999px;font-size:13px;color:var(--muted);font-weight:500}
+.chip.on{background:rgba(217,173,85,.15);border-color:var(--gold);color:var(--gold2)}
+select.sort{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+
+.banner{margin:12px 20px 0;padding:10px 14px;border-radius:10px;background:rgba(217,173,85,.1);border:1px solid rgba(217,173,85,.35);font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner[hidden]{display:none}
+.progress{height:4px;background:var(--line);border-radius:4px;overflow:hidden;flex:1 1 160px}
+.progress i{display:block;height:100%;background:var(--gold);width:0;transition:width .2s}
+
+main{padding:16px 20px 80px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:18px 14px}
+.divider{grid-column:1/-1;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin:10px 0 0}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.empty{color:var(--muted);text-align:center;padding:60px 0}
+
+/* Carta */
+.card{position:relative;transition:opacity .2s}
+.card.dim{opacity:.35}
+.card.dim:hover{opacity:.8}
+.art{position:relative;aspect-ratio:488/680;border-radius:4.75%/3.5%;overflow:visible;background:var(--panel)}
+.art img{width:100%;height:100%;object-fit:cover;border-radius:4.75%/3.5%;display:block;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.ph{position:absolute;inset:0;border-radius:4.75%/3.5%;border:1px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px;gap:8px;color:var(--muted);font-size:13px}
+.ph b{color:var(--text)}
+.qty{position:absolute;left:8px;bottom:8px;background:rgba(10,8,14,.85);border:1px solid var(--gold);color:var(--gold2);font-weight:700;font-size:13px;padding:2px 8px;border-radius:999px}
+.warn{position:absolute;left:8px;top:8px;background:var(--gold);color:#1b1408;font-weight:800;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:help}
+.dots{position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(10,8,14,.82);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.card:hover .dots,.dots.open{opacity:1}
+@media (hover:none){.dots{opacity:1}}
+.menu{position:absolute;right:8px;top:44px;z-index:20;min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.menu button,.menu a{display:flex;width:100%;text-align:left;background:none;border:0;padding:9px 10px;border-radius:7px;font-size:14px;text-decoration:none;color:var(--text);gap:8px;align-items:center}
+.menu button:hover,.menu a:hover{background:rgba(217,173,85,.14)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.qtyedit{position:absolute;inset:0;border-radius:4.75%/3.5%;background:rgba(12,10,16,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:5}
+.qtyrow{display:flex;align-items:center;gap:14px}
+.qtyrow button{width:46px;height:46px;border-radius:50%;border:2px solid var(--gold);background:var(--bg2);font-size:24px;font-weight:700;color:var(--gold2);display:flex;align-items:center;justify-content:center}
+.qtyrow button:active{transform:scale(.94)}
+.qtyrow span{font-size:26px;font-weight:700;min-width:36px;text-align:center}
+.qtyedit .rmall{background:none;border:1px solid var(--red);color:var(--red);padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600}
+.qtyedit .rmall.confirm{background:var(--red);color:#fff}
+.qtyedit .done{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline}
+.meta{padding:8px 2px 0}
+.name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.price{font-size:14px;font-weight:700;color:var(--gold2);display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.price small{font-size:11px;font-weight:500;color:var(--muted)}
+.price.none{color:var(--muted);font-weight:500}
+.card.flash .art img{animation:flash 1.2s}
+@keyframes flash{0%,100%{box-shadow:0 4px 14px rgba(0,0,0,.45)}30%{box-shadow:0 0 0 4px var(--gold)}}
+
+/* Modais */
+.modal{position:fixed;inset:0;background:rgba(5,4,8,.72);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto}
+.modal[hidden]{display:none}
+.box{background:var(--bg2);border:1px solid var(--line);border-radius:16px;width:min(980px,100%);padding:20px;position:relative}
+.box.sm{width:min(460px,100%)}
+.box h2{margin:0 0 4px;font-family:Cinzel,serif;color:var(--gold);font-size:20px}
+.box .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+.close{position:absolute;right:14px;top:14px;border:0;background:none;font-size:22px;color:var(--muted)}
+.prints{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+.print{border:2px solid transparent;border-radius:10px;padding:4px;background:none;text-align:left}
+.print:hover{border-color:var(--line)}
+.print.cur{border-color:var(--gold)}
+.print img{width:100%;border-radius:4.75%/3.5%;display:block;aspect-ratio:488/680;object-fit:cover;background:var(--panel)}
+.print .pi{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
+.print .pi b{color:var(--gold2);font-size:13px}
+label.f{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+.field{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none}
+.field:focus{border-color:var(--gold)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.sugg{margin-top:8px;max-height:300px;overflow:auto;border-radius:10px}
+.sugg button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 12px;border-radius:8px}
+.sugg button:hover,.sugg button.hl{background:rgba(217,173,85,.14)}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);padding:10px 16px;border-radius:12px;z-index:60;display:flex;gap:14px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:14px}
+.toast[hidden]{display:none}
+.toast button{background:none;border:0;color:var(--gold2);font-weight:700}
+.decks{max-width:560px;margin:60px auto;text-align:center;color:var(--muted)}
+.decks h2{font-family:Cinzel,serif;color:var(--gold)}
+.spinner{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:30px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media (max-width:640px){
+  header{position:static}
+  .top{padding:10px 12px;gap:8px 10px}
+  .logo{font-size:18px;flex:1}
+  .logo svg{width:22px;height:22px}
+  #btnAdd{order:2;padding:7px 12px}
+  #btnCfg{order:3;width:34px;height:34px}
+  .tabs{order:4}
+  .tab{padding:6px 12px}
+  .stats{order:5;margin-left:auto;gap:10px;font-size:11px;flex-wrap:wrap;justify-content:flex-end}
+  .stats b{font-size:13px}
+  .sync{width:100%;justify-content:flex-end}
+  .toolbar{padding:0 12px 10px;gap:8px}
+  .search{flex-basis:100%}
+  .chips{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{white-space:nowrap}
+  select.sort{width:100%}
+  main{padding:12px 12px 80px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:14px 10px}
+  .name{font-size:12px}.price{font-size:13px}
+  .qtyrow{gap:6px}
+  .qtyrow button{width:32px;height:32px;font-size:18px;border-width:1.5px}
+  .qtyrow span{font-size:18px;min-width:22px}
+  .qtyedit{gap:8px}
+  .qtyedit .rmall{font-size:11px;padding:5px 8px}
+  .menu{min-width:170px;right:4px}
+  .prints{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="2.5" width="12" height="17" rx="1.8"/><path d="M8 6.5h13v15H8z" fill="#14111a"/><rect x="8" y="6.5" width="12" height="15" rx="1.8"/></svg>
+      MTG Collector
+    </div>
+    <nav class="tabs">
+      <button class="tab on" data-tab="colecao">Coleção</button>
+      <button class="tab" data-tab="decks">Decks<span class="soon">em breve</span></button>
+    </nav>
+    <div class="stats">
+      <span><b id="stCopies">0</b> cartas</span>
+      <span><b id="stUnique">0</b> únicas</span>
+      <span class="val">≈ <b id="stValue">R$ 0</b></span>
+      <span class="sync" id="sync" title=""><i class="dot" id="syncDot"></i><span id="syncTxt">—</span></span>
+    </div>
+    <button class="btn gold" id="btnAdd">+ Carta</button>
+    <button class="btn iconbtn" id="btnCfg" title="Configurações">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+  <div class="toolbar" id="toolbar">
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Pesquisar carta pelo nome…" autocomplete="off">
+    </div>
+    <div class="chips" id="chips"></div>
+    <select class="sort" id="sort">
+      <option value="name">Nome (A–Z)</option>
+      <option value="priceDesc">Maior preço</option>
+      <option value="priceAsc">Menor preço</option>
+      <option value="qty">Mais cópias</option>
+      <option value="recent">Adicionadas por último</option>
+    </select>
+  </div>
+</header>
+
+<div class="banner" id="banner" hidden></div>
+
+<main>
+  <section id="viewCol"><div class="grid" id="grid"><div class="spinner" style="grid-column:1/-1"></div></div></section>
+  <section id="viewDecks" hidden>
+    <div class="decks"><h2>Decks</h2><p>Essa aba vem na próxima versão. Aqui você vai montar decks usando as cartas da sua coleção.</p></div>
+  </section>
+</main>
+
+<!-- Modal: trocar arte -->
+<div class="modal" id="mArt" hidden><div class="box">
+  <button class="close" data-close>×</button>
+  <h2 id="artTitle">Trocar arte</h2>
+  <p class="sub" id="artSub">Escolha a versão. O preço muda junto com a versão escolhida.</p>
+  <div class="prints" id="prints"></div>
+</div></div>
+
+<!-- Modal: preço LigaMagic -->
+<div class="modal" id="mLiga" hidden><div class="box sm">
+  <button class="close" data-close>×</button>
+  <h2>Preço LigaMagic</h2>
+  <p class="sub" id="ligaSub"></p>
+  <a id="ligaLink" target="_blank" rel="noopener">Abrir essa carta na LigaMagic ↗</a>
+  <label class="f" for="ligaVal">Valor por unidade (R$)</label>
+  <input class="field" id="ligaVal" inputmode="decimal" placeholder="ex.: 12,50">
+  <p class="hint">Quando preenchido, esse valor aparece no lugar do preço automático da Scryfall.</p>
+  <div class="row">
+    <button class="btn gold" id="ligaSave">Salvar</button>
+    <button class="btn ghost" id="ligaClear">Voltar para o automático</button>
+  </div>
+</div></div>
+
+<!-- Modal: adicionar / corrigir carta -->
+<div class="modal" id="mAdd" hidden><div class="box sm">
+  <button class="close" data-close>×</button>
+  <h2 id="addTitle">Adicionar carta</h2>
+  <p class="sub" id="addSub">Digite o nome em inglês. Depois dá para trocar a arte no menu da carta.</p>
+  <input class="field" id="addQ" placeholder="Nome da carta…" autocomplete="off">
+  <div class="sugg" id="sugg"></div>
+</div></div>
+
+<!-- Modal: configurações -->
+<div class="modal" id="mCfg" hidden><div class="box sm">
+  <button class="close" data-close>×</button>
+  <h2>Configurações</h2>
+  <p class="sub">Sincronização com o GitHub: a coleção fica salva no repositório e aparece igual no computador e no celular.</p>
+  <label class="f">Usuário do GitHub</label><input class="field" id="cfOwner" placeholder="ex.: davi-arq">
+  <label class="f">Repositório</label><input class="field" id="cfRepo" placeholder="mtg-collector">
+  <label class="f">Token (fine-grained, permissão Contents: Read and write)</label><input class="field" id="cfToken" type="password" placeholder="github_pat_…">
+  <p class="hint">O token fica guardado só neste aparelho (não vai para o repositório). Configure uma vez no computador e uma vez no celular.</p>
+  <div class="row">
+    <button class="btn gold" id="cfSave">Salvar e conectar</button>
+    <span class="hint" id="cfStatus"></span>
+  </div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:20px 0 4px">
+  <div class="row">
+    <button class="btn" id="cfPrices">Atualizar preços agora</button>
+    <button class="btn" id="cfExport">Baixar backup (.json)</button>
+    <label class="btn" style="cursor:pointer">Importar backup<input type="file" id="cfImport" accept=".json,application/json" hidden></label>
+  </div>
+  <p class="hint" id="cfRate"></p>
+</div></div>
+
+<div class="toast" id="toast" hidden><span id="toastTxt"></span><button id="toastUndo">Desfazer</button></div>
+
+<script>
+const SEED = [{"name": "Sovereign Okinec Ahau", "qty": 1}, {"name": "Blossoming Sands", "qty": 1}, {"name": "Command Tower", "qty": 1}, {"name": "Forest", "qty": 15}, {"name": "Graypelt Refuge", "qty": 1}, {"name": "Plains", "qty": 15}, {"name": "Selesnya Sanctuary", "qty": 1}, {"name": "Sunpetal Grove", "qty": 1}, {"name": "Thriving Grove", "qty": 2}, {"name": "Thriving Heath", "qty": 1}, {"name": "Vigorbloom Annex", "qty": 1}, {"name": "Ambitious Augmenter", "qty": 1}, {"name": "Captain's Defense", "qty": 1}, {"name": "Elvish Mystic", "qty": 1}, {"name": "Experiment One", "qty": 1}, {"name": "Flourishing Grapple", "qty": 1}, {"name": "Hardened Scales", "qty": 1}, {"name": "Llanowar Elves", "qty": 1}, {"name": "Meltstrider's Resolve", "qty": 1}, {"name": "Mikaeus, the Lunarch", "qty": 1}, {"name": "Root Maze", "qty": 1}, {"name": "Serpent Specialist", "qty": 1}, {"name": "Silkguard", "qty": 1}, {"name": "Sol Ring", "qty": 1}, {"name": "Swords to Plowshares", "qty": 1}, {"name": "Academic Ascent", "qty": 1}, {"name": "Arcane Signet", "qty": 1}, {"name": "Attercop", "qty": 1}, {"name": "Conclave Mentor", "qty": 1}, {"name": "Dawn Charm", "qty": 1}, {"name": "Dromoka's Command", "qty": 1}, {"name": "Duskshell Crawler", "qty": 1}, {"name": "Dyadrine, Synthesis Amalgam", "qty": 1}, {"name": "Guardian of the Halls", "qty": 1}, {"name": "Gyre Sage", "qty": 1}, {"name": "Immolating Glare", "qty": 1}, {"name": "Knight of Wundagore", "qty": 1}, {"name": "Medic's Kitesail", "qty": 1}, {"name": "Murdock's Crusade", "qty": 1}, {"name": "Nature's Lore", "qty": 1}, {"name": "Pacifism", "qty": 1}, {"name": "Rampant Growth", "qty": 1}, {"name": "Return to Nature", "qty": 1}, {"name": "Swiftfoot Boots", "qty": 1}, {"name": "Teyo, Lightshield Expert", "qty": 1}, {"name": "Valorous Stance", "qty": 1}, {"name": "Cultivate", "qty": 1}, {"name": "Good-Fortune Unicorn", "qty": 1}, {"name": "Kodama's Reach", "qty": 1}, {"name": "Managorger Hydra", "qty": 1}, {"name": "Mister Hyde, Monster Within", "qty": 1}, {"name": "Restore with Empathy", "qty": 1}, {"name": "Rishkar, Peema Renegade", "qty": 1}, {"name": "Simulacrum Shaper", "qty": 1}, {"name": "Surrak, Elusive Hunter", "qty": 1}, {"name": "Ultron, Artificial Malevolence", "qty": 1}, {"name": "Unbreakable Formation", "qty": 1}, {"name": "Web Up", "qty": 1}, {"name": "Your Fate Ends Here", "qty": 1}, {"name": "Armorcraft Judge", "qty": 1}, {"name": "Citadel Siege", "qty": 1}, {"name": "Felidar Retreat", "qty": 1}, {"name": "Forgotten Ancient", "qty": 1}, {"name": "Harmonize", "qty": 1}, {"name": "Ivy Lane Denizen", "qty": 1}, {"name": "Loading Zone", "qty": 1}, {"name": "Thorin's Last Stand", "qty": 1}, {"name": "Training Regimen", "qty": 1}, {"name": "Captain America, Steve Rogers", "qty": 1}, {"name": "Fateshaper Aspirant", "qty": 1}, {"name": "Herd Baloth", "qty": 1}, {"name": "Loyal Guardian", "qty": 1}, {"name": "Shamanic Revelation", "qty": 1}, {"name": "Hour of Revelation", "qty": 1}, {"name": "Rishkar's Expertise", "qty": 1}, {"name": "Xenobotanist", "qty": 2}, {"name": "Shields Up", "qty": 2}, {"name": "Melkotian Adjudicator", "qty": 1}, {"name": "Command Decision", "qty": 2}, {"name": "Constable Odo", "qty": 1}, {"name": "Class-F Shuttlecraft", "qty": 1}, {"name": "Ensign Pavel Chekov", "qty": 1}, {"name": "Obsidian Order Operative", "qty": 2}, {"name": "Federation Field Medic", "qty": 1}, {"name": "Georgiou, Terran Emperor", "qty": 1}, {"name": "Live Long and Prosper", "qty": 1}, {"name": "Troubling Tribbles", "qty": 1}, {"name": "Sickbay", "qty": 1}, {"name": "The Needs of the Many", "qty": 1}, {"name": "Zero, Incorporeal Sensate", "qty": 1}, {"name": "Fugitive Listener", "qty": 1}, {"name": "Warp Core", "qty": 1}, {"name": "Battle-Scarred Survivalist", "qty": 1, "src": "Battle-Scared Survivalist"}, {"name": "Qo'noS", "qty": 2, "src": "Qo’noS"}, {"name": "There's Coffee in That Nebula", "qty": 1, "src": "There’s Coffee In That Nebula"}, {"name": "Emergency Medical Hologram", "qty": 2}, {"name": "Unexplored Territory", "qty": 1}, {"name": "Stray From History", "qty": 2}, {"name": "Open Communications", "qty": 1}, {"name": "Vexing Drone", "qty": 1}, {"name": "Ghost of Illyria", "qty": 1}, {"name": "H.M.S. Bounty, Unlikely Timeship", "qty": 1}, {"name": "Automated Warfare System", "qty": 1}, {"name": "Marooned", "qty": 1}, {"name": "Starfleet Spanner Jockey", "qty": 1}, {"name": "Salt Vampire", "qty": 1}, {"name": "Brad Boimler, Eager Ensign", "qty": 2}, {"name": "Blastoneuron", "qty": 1}, {"name": "Relentless Drednok", "qty": 1}, {"name": "Consider the Prime Detective", "qty": 2}, {"name": "Cetacean Ops", "qty": 1}, {"name": "Tenacious Drone", "qty": 1}, {"name": "Mugato", "qty": 1}, {"name": "Captain James T. Kirk", "qty": 1}, {"name": "Suurok-Class Science Vessel", "qty": 2}, {"name": "Astute Terraformer", "qty": 2}, {"name": "Reckless Impulse", "qty": 2}, {"name": "Starfleet Security", "qty": 1}, {"name": "Captain's Tutelage", "qty": 1, "src": "Captain’s Tutelage"}, {"name": "Command Subajunct", "qty": 1}, {"name": "Hologram Stalker", "qty": 1}, {"name": "Seven of Nine", "qty": 1}, {"name": "U.S.S. Reliant, From Hell's Heart", "qty": 1, "src": "U.S.S. Reliant, From Hell’s Heart"}, {"name": "Tal Shiar Operative", "qty": 1}, {"name": "In the Pale Moonlight", "qty": 1}, {"name": "Tactical Officer", "qty": 1}, {"name": "Tricoder", "qty": 1}, {"name": "Hemmer, Fixing What Is Broken", "qty": 1, "src": "Hemmer, Fixxing What Is Broken"}, {"name": "Those Old Scientists", "qty": 1}, {"name": "Stories Veteran", "qty": 1}, {"name": "The Naked Time", "qty": 1}, {"name": "Boarding Action", "qty": 2}, {"name": "Sylvia Tilly, Joy of Discovery", "qty": 1}, {"name": "Captain Jonathan Archer", "qty": 1}, {"name": "David and Carol Marcus, Creators", "qty": 1}, {"name": "Xindi Surveyors", "qty": 1}, {"name": "Dominion Supervisor", "qty": 1}, {"name": "Dathon and Picard at El-Adrel", "qty": 1}, {"name": "Adversary by Algorithm", "qty": 1}, {"name": "Holo-Engineer", "qty": 1}, {"name": "Assault Drone", "qty": 1}, {"name": "Saurian Explorer", "qty": 1}, {"name": "Dominion Assault Force", "qty": 1}, {"name": "Hive Mind Coprocessor", "qty": 1}, {"name": "Rule of Acquisition", "qty": 1}, {"name": "Una Chin-Riley, Number One", "qty": 1}, {"name": "Free Borg Revolutionaries", "qty": 1}, {"name": "Rogue Artificial Intelligence", "qty": 1, "src": "Rogue Artifical Intelligence"}, {"name": "Planetary Patrol", "qty": 1}, {"name": "Beckett Mariner, Impetuous Ensign", "qty": 1, "src": "Breckett Mariner, Impetuous Ensign"}, {"name": "Munition Enthusiast", "qty": 1}, {"name": "Horta", "qty": 2}, {"name": "Ravenous Cosmozoan", "qty": 1}, {"name": "Test of Identity", "qty": 1}, {"name": "Steam Vents", "qty": 1}, {"name": "Earth, Sector 001", "qty": 2}, {"name": "Village Bell-Ringer", "qty": 1}, {"name": "Gather the Townsfolk", "qty": 2, "src": "Gather the townsfolk"}, {"name": "Collective Defiance", "qty": 1}, {"name": "Bonds of Faith", "qty": 1}, {"name": "Uncaged Fury", "qty": 1}, {"name": "Ímpeto e Adrenalina", "qty": 2, "lang": "pt"}, {"name": "Built to Smash", "qty": 1, "src": "Construído para Arrebentar"}, {"name": "Otherworldly Outburst", "qty": 1, "src": "Otherworldy Outburst"}, {"name": "Long Road Home", "qty": 1, "src": "Longo Caminho para Casa"}, {"name": "Momentary Blink", "qty": 1}, {"name": "Windborn Muse", "qty": 1, "src": "Musa Nascida do Vento"}, {"name": "Kazuul, Tyrant of the Cliffs", "qty": 1, "src": "Kazuul, Tirano dos Penhascos"}, {"name": "Dearly Departed", "qty": 1}, {"name": "Gigante de Quebra-pescoço", "qty": 1, "lang": "pt"}, {"name": "Fiend Hunter", "qty": 1}, {"name": "Steadfast Cathar", "qty": 1, "src": "Cátaro Resoluto"}, {"name": "Howlpack Wolf", "qty": 1}, {"name": "Brazen Wolves", "qty": 1}, {"name": "Elder Cathar", "qty": 1}, {"name": "Champion of the Parish", "qty": 1}, {"name": "Doomed Traveler", "qty": 1}, {"name": "Insolent Neonate", "qty": 1, "src": "Neófito Insolente"}, {"name": "Ragged Short Spear", "qty": 1}, {"name": "Bombur, Gentle Dreamer", "qty": 1}, {"name": "Mirkwood", "qty": 1}, {"name": "Vow to Erebor", "qty": 1, "src": "Vow to erbor"}, {"name": "Óin the Brave", "qty": 1}, {"name": "Wargling", "qty": 1}, {"name": "Nori, Teller of Tales", "qty": 1}, {"name": "Bothersome Noisemaker", "qty": 1}, {"name": "Sylvan Reveler", "qty": 1, "src": "Silvian Reveler"}, {"name": "Beorn, Reluctant Host", "qty": 1}, {"name": "Goblin-town", "qty": 1}, {"name": "Lake-town Toymaker", "qty": 1}, {"name": "Stir Up Trouble", "qty": 1}, {"name": "Plunder the Trollshaws", "qty": 1}, {"name": "S.H.I.E.L.D. Deployment Drone", "qty": 1, "src": "S.H.I.L.D. Deployment"}, {"name": "Doom Blade", "qty": 1}, {"name": "Lakeshore Apothecary", "qty": 1}, {"name": "Long-Bodied Grey Dog", "qty": 1}, {"name": "Stony-Voiced Goblins", "qty": 1}, {"name": "Head of the Hunt", "qty": 1}, {"name": "Stark's Ingenuity", "qty": 1}, {"name": "Confusticate and Bebother", "qty": 1}, {"name": "Dreaded Bat-Cloud", "qty": 1}, {"name": "Gandalf, Wandering Wizard", "qty": 1}, {"name": "Lake-town Mariners", "qty": 1}, {"name": "Blazing Crescendo", "qty": 1}, {"name": "Gollum, Silent Slinker", "qty": 1}, {"name": "Ferocity of the Hunt", "qty": 1}, {"name": "Konstrari Improviser", "qty": 1}, {"name": "Mabel, Valley Hero", "qty": 1}, {"name": "Primal Witchstalker", "qty": 1}, {"name": "Paradox Shaper", "qty": 1}, {"name": "Warrior's Blade", "qty": 2}, {"name": "Iconic Shield", "qty": 1}, {"name": "Cryotheory Adept", "qty": 1}, {"name": "Unsummon", "qty": 1}, {"name": "Precise Redaction", "qty": 1}, {"name": "Divining Duelist", "qty": 1}, {"name": "Icy Reception", "qty": 1}, {"name": "Protege's Awakening", "qty": 1}, {"name": "Sphinx's Approach", "qty": 1}, {"name": "Winter, Tormented Loner", "qty": 2}, {"name": "Teyo, Diamondblade Mage", "qty": 1}, {"name": "Mabel, Bitter Recluse", "qty": 1}, {"name": "Void Extrapolator", "qty": 1}, {"name": "Danitha, Spear of Agony", "qty": 1}, {"name": "Extended Absence", "qty": 1}, {"name": "Last Gasp", "qty": 1}, {"name": "Screeching Soulbreaker", "qty": 1}, {"name": "Something Worth Saving", "qty": 1}, {"name": "Jiang Yanggu, Never Alone", "qty": 1}, {"name": "Carnivorous Cultivator", "qty": 1}, {"name": "Inspired Tethermage", "qty": 1}, {"name": "Wrecking Gecko", "qty": 1}, {"name": "Marwyn, the Preserver", "qty": 1}, {"name": "Memory Trap", "qty": 1}, {"name": "Blossom-Blessed Angel", "qty": 1}, {"name": "Repurposed Enforcer", "qty": 1}, {"name": "Danitha, Sword of Hope", "qty": 1}, {"name": "Chandra's Emberling", "qty": 1}, {"name": "Heartstring Puller", "qty": 1}, {"name": "Skilled Battlecarver", "qty": 1, "src": "Skillede Battlecarver"}, {"name": "Awaken the Inferno", "qty": 1}, {"name": "Winter, Team Player", "qty": 1}, {"name": "Eardrum Rattler", "qty": 1}, {"name": "Tether Technician", "qty": 1}, {"name": "Wrath of the Bloodmane", "qty": 1}, {"name": "Marwyn, the Clearcutter", "qty": 1}, {"name": "Theorix Annex", "qty": 1}, {"name": "Shipwreck Marsh", "qty": 1}, {"name": "Dedicated Communs", "qty": 1}, {"name": "Agent of Atlas", "qty": 1}, {"name": "Agents of S.H.I.E.L.D.", "qty": 1}, {"name": "Brave Brawler", "qty": 1}, {"name": "Hawkeye, Clint Barton", "qty": 2}, {"name": "Hero in Training", "qty": 2}, {"name": "Okoye, Dora Milaje Leader", "qty": 1}, {"name": "Peggy Carter, Secret Agent", "qty": 1}, {"name": "Valkyrior Skyrider", "qty": 1}, {"name": "Fall to Earth", "qty": 1}, {"name": "Wondrous Revival", "qty": 1}, {"name": "Ant-Man, Scott Lang", "qty": 1}, {"name": "Mandroid Squadron", "qty": 1}, {"name": "Mockingbird, Bobbi Morse", "qty": 1}, {"name": "The Falcon, Sam Wilson", "qty": 1}, {"name": "The Wasp, Janet Van Dyne", "qty": 1}, {"name": "Winter Soldier, Bucky Barnes", "qty": 1}, {"name": "Soldier On", "qty": 1}, {"name": "Hawkeye's Shot", "qty": 1}, {"name": "A.I.M. Bot", "qty": 2}, {"name": "Aerial Doombot", "qty": 1}, {"name": "Hydraulic Helper", "qty": 1}, {"name": "Repulsor Bots", "qty": 1}, {"name": "Ultron Drone", "qty": 1}, {"name": "Victor Mancha, Runaway", "qty": 1}, {"name": "War Machine, James Rhodes", "qty": 1}, {"name": "Thirst for Knowledge", "qty": 1}, {"name": "Futurist Forge", "qty": 1}, {"name": "Vibranium Energy Daggers", "qty": 1}, {"name": "Frozen in Ice", "qty": 1}, {"name": "Island", "qty": 14}, {"name": "Thriving Isle", "qty": 2}, {"name": "A.I.M. Scientists", "qty": 1}, {"name": "Atlantean Cavalry", "qty": 1}, {"name": "Blue Marvel, Adam Brashear", "qty": 1}, {"name": "Bold Biochemist", "qty": 1}, {"name": "Brawn, Amadeus Cho", "qty": 1}, {"name": "Graviton, Fundamental Force", "qty": 1}, {"name": "H.E.R.B.I.E. Scout Unit", "qty": 1}, {"name": "Depower", "qty": 1}, {"name": "Trickster's Stratagem", "qty": 1}, {"name": "Super Intelligence", "qty": 1}, {"name": "Agents of HYDRA", "qty": 1}, {"name": "Arnim Zola, Bio-Fanatic", "qty": 1}, {"name": "Doom's Servo-Guards", "qty": 1}, {"name": "Glamorous Grapplers", "qty": 2}, {"name": "HYDRA Troopers", "qty": 1}, {"name": "Kingpin's Enforcers", "qty": 1}, {"name": "Madame Hydra, Reanimated", "qty": 1}, {"name": "Project Deathlok Soldier", "qty": 1}, {"name": "Ultimo, Civilization's End", "qty": 1}, {"name": "Infernal Rebirth", "qty": 1}, {"name": "HYDRA Infiltration", "qty": 1}, {"name": "Swamp", "qty": 14}, {"name": "Thriving Moor", "qty": 2}, {"name": "Baron Strucker, HYDRA Overlord", "qty": 1}, {"name": "Boomerang, Blade Flinger", "qty": 1}, {"name": "Crossbones, Malicious Mercenary", "qty": 1}, {"name": "Minotaur, Roxxon CEO", "qty": 1}, {"name": "Ninja of the Hand", "qty": 1}, {"name": "Red Room Recruit", "qty": 1}, {"name": "Roxxon Brutes", "qty": 1}, {"name": "Tombstone, Career Criminal", "qty": 1}, {"name": "Dark Deed", "qty": 1}, {"name": "Hour of Defeat", "qty": 1}, {"name": "Visions of Villainy", "qty": 1}, {"name": "Black Widow, Natasha Romanoff", "qty": 1}, {"name": "Crimson Operative", "qty": 1}, {"name": "Happy Hogan, Dauntless Driver", "qty": 1}, {"name": "Hulk, Bruce Banner", "qty": 1}, {"name": "Iron Man, Tony Stark", "qty": 1}, {"name": "Quicksilver, Pietro Maximoff", "qty": 1}, {"name": "Scarlet Witch, Wanda Maximoff", "qty": 1}, {"name": "Spider-Man, Hometown Hero", "qty": 1}, {"name": "Concentrated Fire", "qty": 1}, {"name": "Smashing Spree", "qty": 1}, {"name": "Repulsor Rays", "qty": 1}, {"name": "Power Boost", "qty": 1}, {"name": "Mountain", "qty": 15}, {"name": "Iron Lad, Young Avenger", "qty": 1}, {"name": "Patriot, Young Avenger", "qty": 1}, {"name": "She-Hulk, Jennifer Walters", "qty": 1}, {"name": "Speed, Young Avenger", "qty": 1}, {"name": "Stature, Young Avenger", "qty": 1}, {"name": "The Immortal Weapons", "qty": 1}, {"name": "Wiccan, Young Avenger", "qty": 1}, {"name": "Hire a Crew", "qty": 1}, {"name": "Lightning Strike", "qty": 1}, {"name": "Marvelous Melee", "qty": 1}, {"name": "Experimental Armor", "qty": 1}, {"name": "Furious Strength", "qty": 1}, {"name": "Thriving Bluff", "qty": 1}, {"name": "Beast, Erudite Aerialist", "qty": 1}, {"name": "Gamma Grotesque", "qty": 1}, {"name": "Hellcat, Undying Vigilante", "qty": 1}, {"name": "The Thing, Ben Grimm", "qty": 1}, {"name": "Warriors of Wakanda", "qty": 2}, {"name": "Feral Ferocity", "qty": 1}, {"name": "Punishing Punch", "qty": 1}, {"name": "Colossal Collision", "qty": 2}, {"name": "Atlas, Sizable Stooge", "qty": 1}, {"name": "Flora Colossus", "qty": 1}, {"name": "Gert and Old Lace, Runaways", "qty": 1}, {"name": "Moon-Boy, Dino Rider", "qty": 1}, {"name": "Savage Land Dinosaur", "qty": 1}, {"name": "The Fabulous Frog-Man", "qty": 1}, {"name": "Undercover Skrull", "qty": 1}, {"name": "Wakandan Royal Guard", "qty": 1}, {"name": "Thing Swing", "qty": 1}, {"name": "Team Transmitter", "qty": 1}];
+</script>
+<script>
+"use strict";
+/* ============ Utilidades ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const brl = v => v == null ? "—" : v.toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const SCRY = "https://api.scryfall.com";
+const DAY = 864e5;
+
+/* ============ Estado ============ */
+let col = null;                 // {version, cards:[{id,name,qty,sid,liga,src,lang,fuzzy,missing,added}], updatedAt}
+let cache = LS.get("mtgc.cache", {});   // sid -> carta resumida da Scryfall
+let rates = LS.get("mtgc.rates", null); // {usd, eur, t, src}
+let cfg = LS.get("mtgc.cfg", {owner:"", repo:"", token:"", branch:"main", path:"collection.json"});
+let gh = {sha:null};
+const ui = {q:"", types:new Set(), sort:"name", menuFor:null, qtyFor:null, confirmRm:null};
+
+const TYPES = [
+  ["Creature","Criatura"],["Instant","Instantâneo"],["Sorcery","Feitiço"],["Enchantment","Encantamento"],
+  ["Artifact","Artefato"],["Land","Terreno"],["Planeswalker","Planeswalker"],["Battle","Batalha"],["Legendary","Lendária"]
+];
+
+/* ============ Scryfall ============ */
+let lastCall = 0;
+async function scry(path, opts){
+  const wait = 110 - (Date.now() - lastCall);
+  if (wait > 0) await sleep(wait);
+  lastCall = Date.now();
+  const r = await fetch(path.startsWith("http") ? path : SCRY + path, opts);
+  if (r.status === 429){ await sleep(1000); return scry(path, opts); }
+  const j = await r.json().catch(() => null);
+  if (!r.ok) { const e = new Error(j?.details || r.status); e.status = r.status; throw e; }
+  return j;
+}
+function trim(c){
+  const f = c.card_faces?.[0] || {};
+  return {
+    id:c.id, oracle:c.oracle_id, name:c.name, printed:c.printed_name || f.printed_name || null,
+    type:c.type_line || f.type_line || "",
+    img:c.image_uris?.normal || f.image_uris?.normal || null,
+    set:c.set, setName:c.set_name, num:c.collector_number, year:(c.released_at||"").slice(0,4), lang:c.lang,
+    prices:{usd:c.prices?.usd, usd_foil:c.prices?.usd_foil, eur:c.prices?.eur, eur_foil:c.prices?.eur_foil},
+    prints:c.prints_search_uri, t:Date.now()
+  };
+}
+function putCache(c){ const t = trim(c); cache[t.id] = t; return t; }
+function saveCache(){ LS.set("mtgc.cache", cache); }
+const frontName = n => String(n).split(" // ")[0];
+
+async function collectionPost(identifiers){
+  return scry("/cards/collection", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({identifiers})});
+}
+
+/* Descobre o id da Scryfall de cada entrada ainda sem versão definida */
+async function resolveMissing(){
+  const need = col.cards.filter(e => !e.sid && !e.missing);
+  if (!need.length) return;
+  showProgress("Buscando cartas na Scryfall…", 0, need.length);
+  let done = 0;
+  const normal = need.filter(e => e.lang !== "pt");
+  const leftover = need.filter(e => e.lang === "pt");
+  for (let i = 0; i < normal.length; i += 75){
+    const chunk = normal.slice(i, i + 75);
+    try{
+      const res = await collectionPost(chunk.map(e => ({name:e.name})));
+      const byName = {};
+      for (const c of res.data || []){
+        const t = putCache(c);
+        byName[c.name.toLowerCase()] = t.id;
+        byName[frontName(c.name).toLowerCase()] = t.id;
+        (c.card_faces || []).forEach(f => byName[f.name.toLowerCase()] = t.id);
+      }
+      for (const e of chunk){
+        const sid = byName[e.name.toLowerCase()];
+        if (sid){ e.sid = sid; } else leftover.push(e);
+      }
+    }catch(err){ chunk.forEach(e => leftover.push(e)); }
+    done += chunk.length - chunk.filter(e => !e.sid).length;
+    showProgress("Buscando cartas na Scryfall…", done, need.length);
+    render();
+  }
+  for (const e of leftover){
+    let card = null;
+    if (e.lang !== "pt"){
+      try{ card = await scry("/cards/named?fuzzy=" + encodeURIComponent(e.name)); }catch(err){}
+    }
+    if (!card){
+      try{
+        const s = await scry("/cards/search?include_multilingual=true&q=" + encodeURIComponent(e.name));
+        const hit = s.data?.[0];
+        if (hit){
+          try{ card = await scry("/cards/named?exact=" + encodeURIComponent(hit.name)); }catch(err){ card = hit; }
+        }
+      }catch(err){}
+    }
+    if (card){
+      const t = putCache(card);
+      if (t.name.toLowerCase() !== e.name.toLowerCase()){ e.fuzzy = true; e.src = e.src || e.name; }
+      e.sid = t.id; e.name = t.name;
+    } else {
+      e.missing = true;
+    }
+    done++;
+    showProgress("Buscando cartas na Scryfall…", done, need.length);
+    render();
+  }
+  saveCache();
+  hideProgress();
+  scheduleSave();
+}
+
+/* Atualiza preços com mais de 24 h (ou todos, se force) */
+async function refreshPrices(force){
+  const ids = [...new Set(col.cards.map(e => e.sid).filter(Boolean))]
+    .filter(id => force || !cache[id] || Date.now() - cache[id].t > DAY);
+  if (!ids.length) return;
+  showProgress("Atualizando preços…", 0, ids.length);
+  for (let i = 0; i < ids.length; i += 75){
+    try{
+      const res = await collectionPost(ids.slice(i, i + 75).map(id => ({id})));
+      (res.data || []).forEach(putCache);
+    }catch(err){}
+    showProgress("Atualizando preços…", Math.min(i + 75, ids.length), ids.length);
+  }
+  saveCache(); hideProgress(); render();
+}
+
+/* ============ Câmbio ============ */
+async function loadRates(force){
+  if (!force && rates && Date.now() - rates.t < 6 * 36e5) return;
+  try{
+    const r = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL");
+    const j = await r.json();
+    rates = {usd:+j.USDBRL.bid, eur:+j.EURBRL.bid, t:Date.now(), src:"AwesomeAPI"};
+  }catch(e){
+    try{
+      const r = await fetch("https://open.er-api.com/v6/latest/USD");
+      const j = await r.json();
+      rates = {usd:j.rates.BRL, eur:j.rates.BRL / j.rates.EUR, t:Date.now(), src:"ExchangeRate-API"};
+    }catch(e2){
+      if (!rates) rates = {usd:5.4, eur:5.9, t:0, src:"valor fixo (sem internet)"};
+    }
+  }
+  LS.set("mtgc.rates", rates);
+}
+function autoPrice(c){
+  if (!c || !rates) return null;
+  const p = c.prices || {};
+  if (p.usd) return +p.usd * rates.usd;
+  if (p.usd_foil) return +p.usd_foil * rates.usd;
+  if (p.eur) return +p.eur * rates.eur;
+  if (p.eur_foil) return +p.eur_foil * rates.eur;
+  return null;
+}
+function unitPrice(e){
+  if (e.liga != null) return {v:e.liga, src:"Liga"};
+  const v = autoPrice(cache[e.sid]);
+  return {v, src:"Scryfall"};
+}
+const ligaUrl = name => "https://www.ligamagic.com.br/?view=cards/card&card=" + encodeURIComponent(frontName(name));
+
+/* ============ GitHub (sincronização) ============ */
+const ghOn = () => !!(cfg.owner && cfg.repo && cfg.token);
+const ghUrl = () => `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path || "collection.json"}`;
+const b64enc = s => { const b = new TextEncoder().encode(s); let bin = ""; for (let i = 0; i < b.length; i += 8192) bin += String.fromCharCode(...b.subarray(i, i + 8192)); return btoa(bin); };
+const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, "")), c => c.charCodeAt(0)));
+function ghHeaders(){ return {"Authorization":"Bearer " + cfg.token, "Accept":"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28"}; }
+
+async function ghGet(){
+  const r = await fetch(ghUrl() + "?ref=" + encodeURIComponent(cfg.branch || "main") + "&t=" + Date.now(), {headers:ghHeaders(), cache:"no-store"});
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error("GitHub " + r.status);
+  const j = await r.json();
+  gh.sha = j.sha;
+  return JSON.parse(b64dec(j.content));
+}
+async function ghPut(data, retry){
+  const body = {message:"MTG Collector: atualiza coleção", content:b64enc(JSON.stringify(data, null, 1)), branch:cfg.branch || "main"};
+  if (gh.sha) body.sha = gh.sha;
+  const r = await fetch(ghUrl(), {method:"PUT", headers:{...ghHeaders(), "Content-Type":"application/json"}, body:JSON.stringify(body)});
+  if ((r.status === 409 || r.status === 422) && !retry){
+    const cur = await fetch(ghUrl() + "?ref=" + encodeURIComponent(cfg.branch || "main") + "&t=" + Date.now(), {headers:ghHeaders(), cache:"no-store"});
+    gh.sha = cur.ok ? (await cur.json()).sha : null;
+    return ghPut(data, true);
+  }
+  if (!r.ok) throw new Error("GitHub " + r.status);
+  gh.sha = (await r.json()).content.sha;
+}
+
+let saveTimer = null, saving = false, pendingSave = false, dirty = false;
+function setSync(state, txt, title){
+  $("#syncDot").className = "dot " + state;
+  $("#syncTxt").textContent = txt;
+  $("#sync").title = title || "";
+}
+function scheduleSave(){
+  col.updatedAt = new Date().toISOString();
+  LS.set("mtgc.col", col);
+  if (!ghOn()){ setSync("", "Só neste aparelho", "Configure o GitHub (engrenagem) para sincronizar"); return; }
+  dirty = true;
+  setSync("busy", "Salvando…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doSave, 1200);
+}
+async function doSave(){
+  if (saving){ pendingSave = true; return; }
+  saving = true;
+  try{ await ghPut(col); if (!pendingSave) dirty = false; setSync("ok", "Sincronizado", "Salvo no GitHub às " + new Date().toLocaleTimeString("pt-BR")); }
+  catch(e){ setSync("err", "Erro ao salvar", String(e.message) + " — as mudanças ficaram guardadas neste aparelho"); }
+  saving = false;
+  if (pendingSave){ pendingSave = false; doSave(); }
+}
+
+/* ============ Carregamento ============ */
+function seedCollection(){
+  return {version:1, updatedAt:new Date().toISOString(),
+    cards:SEED.map((s, i) => ({id:uid(), name:s.name, qty:s.qty, sid:null, liga:null, src:s.src, lang:s.lang, added:i}))};
+}
+function normalize(c){
+  if (!c || !Array.isArray(c.cards)) return null;
+  c.cards.forEach((e, i) => { e.id = e.id || uid(); e.qty = Math.max(1, +e.qty || 1); if (e.added == null) e.added = i; });
+  return c;
+}
+async function loadCollection(){
+  const local = normalize(LS.get("mtgc.col", null));
+  if (ghOn()){
+    try{
+      setSync("busy", "Carregando…");
+      const remote = normalize(await ghGet());
+      if (remote){ setSync("ok", "Sincronizado"); return remote; }
+      // primeiro uso: repositório ainda sem collection.json
+      const start = local || seedCollection();
+      await ghPut(start); setSync("ok", "Sincronizado");
+      return start;
+    }catch(e){
+      setSync("err", "Sem conexão com o GitHub", e.message + " — usando a cópia deste aparelho");
+      return local || seedCollection();
+    }
+  }
+  if (local){ setSync("", "Só neste aparelho", "Configure o GitHub (engrenagem) para sincronizar"); return local; }
+  // sem token: tenta a cópia publicada junto com o site (somente leitura)
+  try{
+    const r = await fetch("collection.json?t=" + Date.now(), {cache:"no-store"});
+    if (r.ok){ const c = normalize(await r.json()); if (c){ setSync("", "Só leitura", "Configure o GitHub para editar"); return c; } }
+  }catch(e){}
+  setSync("", "Só neste aparelho", "Configure o GitHub (engrenagem) para sincronizar");
+  return seedCollection();
+}
+
+/* ============ Renderização ============ */
+function matches(e){
+  const c = cache[e.sid];
+  if (ui.q){
+    const q = ui.q.toLowerCase();
+    const hay = [e.name, e.src, c?.printed].filter(Boolean).join(" | ").toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  if (ui.types.size){
+    const t = c?.type || "";
+    if (![...ui.types].some(x => t.includes(x))) return false;
+  }
+  return true;
+}
+function sorter(a, b){
+  const pa = unitPrice(a).v ?? -1, pb = unitPrice(b).v ?? -1;
+  switch (ui.sort){
+    case "priceDesc": return pb - pa || a.name.localeCompare(b.name);
+    case "priceAsc": return (pa < 0 ? 1e9 : pa) - (pb < 0 ? 1e9 : pb) || a.name.localeCompare(b.name);
+    case "qty": return b.qty - a.qty || a.name.localeCompare(b.name);
+    case "recent": return (b.added ?? 0) - (a.added ?? 0);
+    default: return a.name.localeCompare(b.name);
+  }
+}
+
+const tiles = new Map();
+function tileHTML(e){
+  const c = cache[e.sid];
+  const pr = unitPrice(e);
+  const total = pr.v != null && e.qty > 1 ? `<small>total ${brl(pr.v * e.qty)}</small>` : "";
+  const price = pr.v == null
+    ? `<div class="price none">sem preço</div>`
+    : `<div class="price">${brl(pr.v)} <small>${pr.src}</small>${total}</div>`;
+  let art;
+  if (e.missing) art = `<div class="ph"><b>${esc(e.src || e.name)}</b>Não encontrei essa carta.<button class="btn" data-act="fix">Corrigir</button></div>`;
+  else if (!c) art = `<div class="ph"><b>${esc(e.name)}</b>carregando…</div>`;
+  else if (!c.img) art = `<div class="ph"><b>${esc(c.name)}</b>sem imagem</div>`;
+  else art = `<img loading="lazy" src="${esc(c.img)}" alt="${esc(c.name)}">`;
+  const warn = e.fuzzy ? `<span class="warn" title="Nome ajustado automaticamente (na sua lista: “${esc(e.src)}”). Confira se é essa carta.">!</span>` : "";
+  let menu = "";
+  if (ui.menuFor === e.id){
+    menu = `<div class="menu">
+      ${e.missing ? "" : `<button data-act="art">🖼 Trocar a arte</button>`}
+      <button data-act="qty">± Adicionar / remover</button>
+      <hr>
+      <button data-act="liga">R$ Preço da LigaMagic…</button>
+      <a href="${esc(ligaUrl(e.name))}" target="_blank" rel="noopener">↗ Ver na LigaMagic</a>
+      <hr>
+      ${e.fuzzy ? `<button data-act="ok">✓ A carta está certa</button>` : ""}
+      <button data-act="fix">✎ Trocar por outra carta</button>
+    </div>`;
+  }
+  let qtyedit = "";
+  if (ui.qtyFor === e.id){
+    const conf = ui.confirmRm === e.id;
+    qtyedit = `<div class="qtyedit">
+      <div class="qtyrow"><button data-act="minus" aria-label="Remover uma">−</button><span>${e.qty}</span><button data-act="plus" aria-label="Adicionar uma">+</button></div>
+      <button class="rmall ${conf ? "confirm" : ""}" data-act="rmall">${conf ? "Confirmar remoção" : "Remover todas"}</button>
+      <button class="done" data-act="done">Pronto</button>
+    </div>`;
+  }
+  return `<div class="art">${art}${warn}<span class="qty">×${e.qty}</span>
+      <button class="dots ${ui.menuFor === e.id ? "open" : ""}" data-act="menu" aria-label="Opções"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+      ${menu}${qtyedit}</div>
+    <div class="meta"><div class="name" title="${esc(c?.name || e.name)}">${esc(c?.name || e.name)}</div>${price}</div>`;
+}
+function tileFor(e){
+  let el = tiles.get(e.id);
+  const html = tileHTML(e);
+  if (!el){ el = document.createElement("div"); el.className = "card"; el.dataset.id = e.id; tiles.set(e.id, el); }
+  if (el._html !== html){ el.innerHTML = html; el._html = html; }
+  return el;
+}
+let divider = null;
+function render(){
+  if (!col) return;
+  const grid = $("#grid");
+  const list = [...col.cards].sort(sorter);
+  const filtering = !!(ui.q || ui.types.size);
+  const top = [], rest = [];
+  list.forEach(e => (matches(e) ? top : rest).push(e));
+  // remove peças de cartas apagadas
+  const alive = new Set(col.cards.map(e => e.id));
+  for (const [id, el] of tiles) if (!alive.has(id)){ el.remove(); tiles.delete(id); }
+  grid.querySelector(".spinner")?.remove();
+  grid.querySelector(".empty")?.remove();
+  if (!divider){ divider = document.createElement("div"); divider.className = "divider"; }
+  const order = [];
+  top.forEach(e => { const el = tileFor(e); el.classList.remove("dim"); order.push(el); });
+  if (filtering){
+    divider.textContent = top.length ? `Fora do filtro (${rest.length})` : `Nenhuma carta bate com o filtro — mostrando o resto (${rest.length})`;
+    order.push(divider);
+  }
+  rest.forEach(e => { const el = tileFor(e); el.classList.toggle("dim", filtering); order.push(el); });
+  if (!filtering) divider.remove();
+  order.forEach((el, i) => { if (grid.children[i] !== el) grid.insertBefore(el, grid.children[i] || null); });
+  while (grid.children.length > order.length) grid.lastChild.remove();
+  if (!col.cards.length){ const d = document.createElement("div"); d.className = "empty"; d.textContent = "Nenhuma carta ainda. Use “+ Carta” para começar."; grid.append(d); }
+  // números do topo
+  let copies = 0, value = 0;
+  col.cards.forEach(e => { copies += e.qty; const v = unitPrice(e).v; if (v) value += v * e.qty; });
+  $("#stCopies").textContent = copies.toLocaleString("pt-BR");
+  $("#stUnique").textContent = col.cards.length.toLocaleString("pt-BR");
+  $("#stValue").textContent = brl(value);
+}
+
+/* ============ Ações nas cartas ============ */
+const byId = id => col.cards.find(e => e.id === id);
+let undo = null, toastTimer = null;
+function toast(txt, undoFn){
+  $("#toastTxt").textContent = txt;
+  $("#toastUndo").hidden = !undoFn;
+  undo = undoFn || null;
+  $("#toast").hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $("#toast").hidden = true; undo = null; }, 6000);
+}
+$("#toastUndo").onclick = () => { if (undo) undo(); $("#toast").hidden = true; };
+
+function removeEntry(e){
+  const idx = col.cards.indexOf(e);
+  col.cards.splice(idx, 1);
+  ui.qtyFor = ui.confirmRm = ui.menuFor = null;
+  scheduleSave(); render();
+  toast(`${e.name} removida da coleção`, () => { col.cards.splice(idx, 0, e); scheduleSave(); render(); });
+}
+
+$("#grid").addEventListener("click", ev => {
+  const btn = ev.target.closest("[data-act]");
+  const card = ev.target.closest(".card");
+  if (!btn || !card) return;
+  ev.stopPropagation();
+  const e = byId(card.dataset.id);
+  if (!e) return;
+  const act = btn.dataset.act;
+  if (act === "menu"){ ui.menuFor = ui.menuFor === e.id ? null : e.id; ui.qtyFor = null; ui.confirmRm = null; render(); return; }
+  ui.menuFor = null;
+  switch (act){
+    case "art": openArt(e); break;
+    case "qty": ui.qtyFor = e.id; ui.confirmRm = null; break;
+    case "plus": e.qty++; ui.confirmRm = null; scheduleSave(); break;
+    case "minus":
+      if (e.qty > 1){ e.qty--; ui.confirmRm = null; scheduleSave(); }
+      else ui.confirmRm = e.id;   // última cópia: pede confirmação
+      break;
+    case "rmall":
+      if (ui.confirmRm === e.id){ removeEntry(e); return; }
+      ui.confirmRm = e.id; break;
+    case "done": ui.qtyFor = null; ui.confirmRm = null; break;
+    case "liga": openLiga(e); break;
+    case "ok": e.fuzzy = false; scheduleSave(); break;
+    case "fix": openAdd(e); break;
+  }
+  render();
+});
+document.addEventListener("click", ev => {
+  if (ev.target.closest(".menu,.qtyedit,.dots,.modal,.toast")) return;
+  if (ui.menuFor || ui.qtyFor){ ui.menuFor = ui.qtyFor = ui.confirmRm = null; render(); }
+});
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape"){
+    document.querySelectorAll(".modal").forEach(m => m.hidden = true);
+    ui.menuFor = ui.qtyFor = ui.confirmRm = null; render();
+  }
+});
+document.querySelectorAll(".modal").forEach(m => {
+  m.addEventListener("click", ev => { if (ev.target === m || ev.target.hasAttribute("data-close")) m.hidden = true; });
+});
+
+/* ---- Trocar arte ---- */
+async function openArt(e){
+  const c = cache[e.sid];
+  $("#artTitle").textContent = "Trocar arte — " + e.name;
+  $("#prints").innerHTML = `<div class="spinner" style="grid-column:1/-1"></div>`;
+  $("#mArt").hidden = false;
+  try{
+    let url = c?.prints || (SCRY + "/cards/search?unique=prints&order=released&q=" + encodeURIComponent('!"' + e.name + '"'));
+    let all = [], pages = 0;
+    while (url && pages < 4){
+      const j = await scry(url);
+      all = all.concat(j.data || []);
+      url = j.has_more ? j.next_page : null; pages++;
+    }
+    const items = all.map(putCache);
+    saveCache();
+    $("#artSub").textContent = `${items.length} versões. O preço muda junto com a versão escolhida.`;
+    $("#prints").innerHTML = items.map(p => {
+      const v = autoPrice(p);
+      return `<button class="print ${p.id === e.sid ? "cur" : ""}" data-sid="${p.id}">
+        ${p.img ? `<img loading="lazy" src="${esc(p.img)}" alt="">` : `<div class="ph">sem imagem</div>`}
+        <div class="pi"><b>${v == null ? "sem preço" : brl(v)}</b><br>${esc(p.setName)} · #${esc(p.num)}<br>${esc(p.year)}${p.lang !== "en" ? " · " + esc(p.lang.toUpperCase()) : ""}</div>
+      </button>`;
+    }).join("");
+    $("#prints").onclick = ev => {
+      const b = ev.target.closest(".print"); if (!b) return;
+      e.sid = b.dataset.sid;
+      $("#mArt").hidden = true;
+      scheduleSave(); render(); flash(e.id);
+    };
+  }catch(err){
+    $("#prints").innerHTML = `<p class="hint">Não consegui carregar as versões (${esc(err.message)}). Confira a internet e tente de novo.</p>`;
+  }
+}
+function flash(id){ const el = tiles.get(id); if (!el) return; el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+
+/* ---- Preço LigaMagic ---- */
+let ligaFor = null;
+function openLiga(e){
+  ligaFor = e;
+  $("#ligaSub").textContent = e.name;
+  $("#ligaLink").href = ligaUrl(e.name);
+  $("#ligaVal").value = e.liga != null ? String(e.liga).replace(".", ",") : "";
+  const auto = autoPrice(cache[e.sid]);
+  $("#ligaVal").placeholder = auto != null ? "automático: " + brl(auto) : "ex.: 12,50";
+  $("#mLiga").hidden = false;
+  setTimeout(() => $("#ligaVal").focus(), 50);
+}
+$("#ligaSave").onclick = () => {
+  const raw = $("#ligaVal").value.trim().replace(/[R$\s]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".");
+  const v = parseFloat(raw);
+  ligaFor.liga = isFinite(v) && v >= 0 ? Math.round(v * 100) / 100 : null;
+  $("#mLiga").hidden = true; scheduleSave(); render();
+};
+$("#ligaVal").addEventListener("keydown", ev => { if (ev.key === "Enter") $("#ligaSave").click(); });
+$("#ligaClear").onclick = () => { ligaFor.liga = null; $("#mLiga").hidden = true; scheduleSave(); render(); };
+
+/* ---- Adicionar / corrigir carta ---- */
+let fixFor = null, acTimer = null, acSeq = 0;
+function openAdd(e){
+  fixFor = e || null;
+  $("#addTitle").textContent = e ? "Trocar por outra carta" : "Adicionar carta";
+  $("#addSub").textContent = e
+    ? `Na sua lista estava “${e.src || e.name}”. Busque o nome certo em inglês; a quantidade (×${e.qty}) continua a mesma.`
+    : "Digite o nome em inglês. Depois dá para trocar a arte no menu da carta.";
+  $("#addQ").value = e ? (e.src || e.name) : "";
+  $("#sugg").innerHTML = "";
+  $("#mAdd").hidden = false;
+  setTimeout(() => { $("#addQ").focus(); if (e) autocomplete(); }, 50);
+}
+async function autocomplete(){
+  const q = $("#addQ").value.trim();
+  const seq = ++acSeq;
+  if (q.length < 2){ $("#sugg").innerHTML = ""; return; }
+  try{
+    let names = (await scry("/cards/autocomplete?q=" + encodeURIComponent(q))).data || [];
+    if (!names.length){
+      // tenta em outros idiomas (ex.: nome em português)
+      const s = await scry("/cards/search?include_multilingual=true&q=" + encodeURIComponent(q)).catch(() => null);
+      names = [...new Set((s?.data || []).map(c => c.name))].slice(0, 10);
+    }
+    if (seq !== acSeq) return;
+    $("#sugg").innerHTML = names.length ? names.map(n => `<button data-n="${esc(n)}">${esc(n)}</button>`).join("") : `<p class="hint">Nada encontrado.</p>`;
+  }catch(err){ if (seq === acSeq) $("#sugg").innerHTML = `<p class="hint">Sem resposta da Scryfall.</p>`; }
+}
+$("#addQ").addEventListener("input", () => { clearTimeout(acTimer); acTimer = setTimeout(autocomplete, 250); });
+$("#addQ").addEventListener("keydown", ev => { if (ev.key === "Enter"){ const b = $("#sugg button"); if (b) b.click(); } });
+$("#sugg").onclick = async ev => {
+  const b = ev.target.closest("button[data-n]"); if (!b) return;
+  try{
+    const c = putCache(await scry("/cards/named?exact=" + encodeURIComponent(b.dataset.n)));
+    saveCache();
+    let target;
+    if (fixFor){
+      Object.assign(fixFor, {name:c.name, sid:c.id, missing:false, fuzzy:false, lang:undefined});
+      target = fixFor;
+    } else {
+      target = col.cards.find(e => e.sid === c.id);
+      if (target) target.qty++;
+      else { target = {id:uid(), name:c.name, qty:1, sid:c.id, liga:null, added:Date.now()}; col.cards.push(target); }
+    }
+    $("#mAdd").hidden = true;
+    scheduleSave(); render();
+    toast(fixFor ? `Carta trocada para ${c.name}` : `${c.name} adicionada (×${target.qty})`);
+    const el = tiles.get(target.id); if (el){ el.scrollIntoView({behavior:"smooth", block:"center"}); flash(target.id); }
+  }catch(err){ toast("Não consegui buscar essa carta agora."); }
+};
+$("#btnAdd").onclick = () => openAdd(null);
+
+/* ---- Configurações ---- */
+$("#btnCfg").onclick = () => {
+  $("#cfOwner").value = cfg.owner; $("#cfRepo").value = cfg.repo; $("#cfToken").value = cfg.token;
+  $("#cfStatus").textContent = ghOn() ? "Conectado." : "";
+  $("#cfRate").textContent = rates ? `Cotação: US$ 1 = ${brl(rates.usd)} · € 1 = ${brl(rates.eur)} (${rates.src}${rates.t ? ", " + new Date(rates.t).toLocaleString("pt-BR") : ""}). Preços da Scryfall são de lojas dos EUA/Europa convertidos; para o valor no Brasil, use o preço da LigaMagic.` : "";
+  $("#mCfg").hidden = false;
+};
+$("#cfSave").onclick = async () => {
+  cfg = {...cfg, owner:$("#cfOwner").value.trim(), repo:$("#cfRepo").value.trim(), token:$("#cfToken").value.trim()};
+  LS.set("mtgc.cfg", cfg);
+  $("#cfStatus").textContent = "Conectando…";
+  if (!ghOn()){ $("#cfStatus").textContent = "Preencha os três campos."; return; }
+  try{
+    const remote = normalize(await ghGet());
+    if (remote && remote.cards.length){
+      col = remote; tiles.forEach(el => el.remove()); tiles.clear();
+      $("#cfStatus").textContent = "Conectado! Coleção carregada do GitHub.";
+    } else {
+      await ghPut(col);
+      $("#cfStatus").textContent = "Conectado! Coleção enviada para o GitHub.";
+    }
+    setSync("ok", "Sincronizado"); render(); resolveMissing().then(() => refreshPrices());
+  }catch(e){ $("#cfStatus").textContent = "Não conectou (" + e.message + "). Confira usuário, repositório e token."; setSync("err", "Erro de conexão"); }
+};
+$("#cfPrices").onclick = async () => { $("#mCfg").hidden = true; await loadRates(true); await refreshPrices(true); toast("Preços atualizados."); };
+$("#cfExport").onclick = () => {
+  const blob = new Blob([JSON.stringify(col, null, 1)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "mtg-collector-backup.json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+$("#cfImport").onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  try{
+    const c = normalize(JSON.parse(await f.text()));
+    if (!c) throw new Error("arquivo inválido");
+    col = c; tiles.forEach(el => el.remove()); tiles.clear();
+    $("#mCfg").hidden = true; scheduleSave(); render(); resolveMissing();
+    toast("Backup importado.");
+  }catch(e){ toast("Não consegui ler esse arquivo."); }
+  ev.target.value = "";
+};
+
+/* ---- Filtros e abas ---- */
+$("#chips").innerHTML = TYPES.map(([en, pt]) => `<button class="chip" data-t="${en}">${pt}</button>`).join("");
+$("#chips").onclick = ev => {
+  const b = ev.target.closest(".chip"); if (!b) return;
+  const t = b.dataset.t;
+  ui.types.has(t) ? ui.types.delete(t) : ui.types.add(t);
+  b.classList.toggle("on");
+  render();
+};
+let qTimer = null;
+$("#q").addEventListener("input", ev => { clearTimeout(qTimer); qTimer = setTimeout(() => { ui.q = ev.target.value.trim(); render(); }, 120); });
+$("#sort").onchange = ev => { ui.sort = ev.target.value; LS.set("mtgc.sort", ui.sort); render(); };
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  const deck = t.dataset.tab === "decks";
+  $("#viewCol").hidden = deck; $("#viewDecks").hidden = !deck; $("#toolbar").hidden = deck;
+});
+
+/* ---- Barra de progresso ---- */
+function showProgress(txt, n, total){
+  const b = $("#banner");
+  b.hidden = false;
+  b.innerHTML = `<span>${esc(txt)} ${n}/${total}</span><div class="progress"><i style="width:${total ? Math.round(n / total * 100) : 0}%"></i></div>`;
+}
+function hideProgress(){ $("#banner").hidden = true; }
+
+/* ---- Recarrega quando volta para o app (ex.: mexeu no celular, abriu no PC) ---- */
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState !== "visible" || !ghOn() || saving || dirty) return;
+  try{
+    const remote = normalize(await ghGet());
+    if (remote && remote.updatedAt !== col.updatedAt && (!col.updatedAt || remote.updatedAt > col.updatedAt)){
+      col = remote; LS.set("mtgc.col", col); render(); resolveMissing();
+    }
+  }catch(e){}
+});
+
+/* ============ Início ============ */
+(async function init(){
+  ui.sort = LS.get("mtgc.sort", "name"); $("#sort").value = ui.sort;
+  await loadRates();
+  col = await loadCollection();
+  LS.set("mtgc.col", col);
+  render();
+  await resolveMissing();
+  await refreshPrices(false);
+})();
+</script>
+</body>
+</html>
